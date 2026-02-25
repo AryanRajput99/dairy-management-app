@@ -344,15 +344,14 @@ async function loadDailyEntry() {
                 <div class="item-avatar ${avatarClass}" style="width:38px;height:38px;font-size:14px">${initials}</div>
                 <div class="item-info">
                     <div class="item-name">${escapeHtml(customer.name)}</div>
-                    <div class="item-detail">Default: ${customer.defaultQty}L · ₹${customer.rate}/L${customer.area ? ' · ' + escapeHtml(customer.area) : ''}</div>
+                    <div class="item-detail">₹${customer.rate}/L${customer.area ? ' · ' + escapeHtml(customer.area) : ''}</div>
                 </div>
                 <div class="qty-control">
                     <button class="qty-btn qty-btn-minus" onclick="adjustQty('${customer.id}', -0.5)">−</button>
                     <input type="number" class="qty-input" id="qty-${customer.id}" 
                            value="${qty || ''}" step="0.5" min="0" 
-                           placeholder="${customer.defaultQty}"
-                           onchange="updateQty('${customer.id}', this.value)"
-                           onfocus="if(!this.value) this.value = ${customer.defaultQty}">
+                           placeholder="0"
+                           onchange="updateQty('${customer.id}', this.value)">
                     <button class="qty-btn qty-btn-plus" onclick="adjustQty('${customer.id}', 0.5)">+</button>
                 </div>
             </div>
@@ -501,15 +500,27 @@ async function loadCustomers() {
     let html = '';
     const filteredCustomers = filterCustomersByArea(customers, state.customersAreaFilter);
 
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
     for (const customer of filteredCustomers) {
         const initials = getInitials(customer.name);
         const avatarClass = getAvatarClass(customer.name);
+
+        // Calculate outstanding balance for this customer
+        const bill = await db.generateBill(customer.id, currentYear, currentMonth);
+        const balance = bill ? bill.balanceDue : 0;
+        const balanceDisplay = balance > 0 ? `<span class="customer-balance due">₹${formatNumber(balance)} due</span>` :
+            balance < 0 ? `<span class="customer-balance credit">₹${formatNumber(Math.abs(balance))} credit</span>` :
+                `<span class="customer-balance clear">₹0 due</span>`;
+
         html += `
             <div class="customer-item" data-customer-name="${escapeHtml(customer.name.toLowerCase())}">
                 <div class="item-avatar ${avatarClass}">${initials}</div>
                 <div class="item-info">
-                    <div class="item-name">${escapeHtml(customer.name)}</div>
-                    <div class="item-detail">${customer.phone ? '📱 ' + customer.phone : 'No phone'} · ${customer.defaultQty}L · ₹${customer.rate}/L${customer.area ? ' · 📍' + escapeHtml(customer.area) : ''}</div>
+                    <div class="item-name">${escapeHtml(customer.name)} ${balanceDisplay}</div>
+                    <div class="item-detail">${customer.phone ? '📱 ' + customer.phone : 'No phone'} · ₹${customer.rate}/L${customer.area ? ' · 📍' + escapeHtml(customer.area) : ''}</div>
                 </div>
                 <div class="item-actions">
                     <button class="btn-edit-customer" onclick="editCustomer('${customer.id}')" aria-label="Edit">
