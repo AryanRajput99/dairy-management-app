@@ -683,6 +683,8 @@ async function loadBilling() {
         const avatarClass = getAvatarClass(customer.name);
         const balanceClass = bill.prevBalance > 0 ? 'balance-positive' :
             bill.prevBalance < 0 ? 'balance-negative' : 'balance-zero';
+        const dueClass = bill.balanceDue > 0 ? 'balance-positive' : 'balance-zero';
+        const paidClass = bill.paidThisMonth > 0 ? 'balance-paid' : '';
 
         html += `
             <div class="billing-item">
@@ -692,13 +694,16 @@ async function loadBilling() {
                     <div class="item-detail">${bill.deliveryDays} days · ${bill.totalQty}L · ₹${bill.rate}/L${customer.area ? ' · 📍' + escapeHtml(customer.area) : ''}</div>
                 </div>
                 <div class="item-value">
-                    <div class="item-qty">₹${formatNumber(bill.finalAmount)}</div>
+                    <div class="item-qty ${bill.balanceDue <= 0 ? 'text-success' : ''}">₹${formatNumber(bill.balanceDue)}</div>
+                    ${bill.balanceDue <= 0 && bill.paidThisMonth > 0 ? '<div class="item-amount" style="color:var(--accent-success)">✅ Paid</div>' : '<div class="item-amount">Due</div>'}
                 </div>
                 <div class="billing-details">
                     <span>Month Total: <strong>₹${formatNumber(bill.monthTotal)}</strong></span>
                     <span>Total Qty: <strong>${bill.totalQty}L</strong></span>
                     <span class="${balanceClass}">Prev Balance: <strong>₹${formatNumber(bill.prevBalance)}</strong></span>
-                    <span>Final: <strong>₹${formatNumber(bill.finalAmount)}</strong></span>
+                    <span>Total Bill: <strong>₹${formatNumber(bill.finalAmount)}</strong></span>
+                    ${bill.paidThisMonth > 0 ? `<span class="${paidClass}">Paid: <strong style="color:var(--accent-success)">₹${formatNumber(bill.paidThisMonth)}</strong></span>` : ''}
+                    ${bill.paidThisMonth > 0 ? `<span class="${dueClass}">Balance Due: <strong>₹${formatNumber(bill.balanceDue)}</strong></span>` : ''}
                 </div>
                 <div class="billing-actions">
                     <button class="btn-whatsapp" onclick="sendWhatsAppBill('${customer.id}', ${state.billingYear}, ${state.billingMonth})">

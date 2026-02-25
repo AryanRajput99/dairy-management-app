@@ -1524,3 +1524,11 @@ select.form-input {
 .balance-zero {
     color: var(--text-muted) !important;
 }
+
+.text-success {
+    color: var(--accent-success) !important;
+}
+
+.balance-paid {
+    color: var(--accent-success) !important;
+}

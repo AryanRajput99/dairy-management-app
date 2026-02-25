@@ -262,6 +262,10 @@ class DairyDB {
 
         const finalAmount = monthTotal + prevBalance;
 
+        // Get payments made this month
+        const paidThisMonth = await this.getCustomerPaymentsTotal(customerId, year, month);
+        const balanceDue = finalAmount - paidThisMonth;
+
         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December'];
         const lastDay = new Date(year, month + 1, 0).getDate();
@@ -280,6 +284,8 @@ class DairyDB {
             monthTotal,
             prevBalance,
             finalAmount,
+            paidThisMonth,
+            balanceDue,
             deliveryDays: (await this.getDeliveriesForMonth(year, month)).filter(d => d.customerId === customerId).length
         };
     }
