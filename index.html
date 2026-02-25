@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="Dairy Management App - Track milk deliveries, billing, and payments easily">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DairyBook">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <title>DairyBook - Milk Delivery Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="splash-screen">
+        <div class="splash-content">
+            <div class="splash-icon">🥛</div>
+            <h1 class="splash-title">DairyBook</h1>
+            <p class="splash-subtitle">Milk Delivery Management</p>
+            <div class="splash-loader">
+                <div class="splash-loader-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Container -->
+    <div id="app" class="app hidden">
+        <!-- Header -->
+        <header id="app-header" class="app-header">
+            <div class="header-left">
+                <button id="btn-back" class="btn-icon hidden" aria-label="Go back">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 12H5" />
+                        <path d="m12 19-7-7 7-7" />
+                    </svg>
+                </button>
+                <h1 id="header-title" class="header-title">DairyBook</h1>
+            </div>
+            <div class="header-right">
+                <span id="header-date" class="header-date"></span>
+                <button id="btn-settings" class="btn-icon" aria-label="Settings">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3" />
+                        <path
+                            d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="main-content">
+
+            <!-- ==================== DASHBOARD SCREEN ==================== -->
+            <section id="screen-dashboard" class="screen active">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-card-primary" id="stat-today-deliveries">
+                        <div class="stat-icon">🚚</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="val-today-deliveries">0</span>
+                            <span class="stat-label">Today's Deliveries</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-success" id="stat-today-milk">
+                        <div class="stat-icon">🥛</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="val-today-milk">0L</span>
+                            <span class="stat-label">Milk Delivered</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-warning" id="stat-pending">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="val-pending">₹0</span>
+                            <span class="stat-label">Pending Amount</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-info" id="stat-customers">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="val-customers">0</span>
+                            <span class="stat-label">Total Customers</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="section-header">
+                    <h2>Quick Actions</h2>
+                </div>
+                <div class="quick-actions">
+                    <button class="action-card" id="btn-daily-entry" data-screen="daily-entry">
+                        <div class="action-icon">📝</div>
+                        <span class="action-label">Daily Entry</span>
+                        <span class="action-desc">Record today's deliveries</span>
+                    </button>
+                    <button class="action-card" id="btn-customers" data-screen="customers">
+                        <div class="action-icon">👥</div>
+                        <span class="action-label">Customers</span>
+                        <span class="action-desc">Manage customers</span>
+                    </button>
+                    <button class="action-card" id="btn-billing" data-screen="billing">
+                        <div class="action-icon">🧾</div>
+                        <span class="action-label">Monthly Bill</span>
+                        <span class="action-desc">Generate & send bills</span>
+                    </button>
+                    <button class="action-card" id="btn-payments" data-screen="payments">
+                        <div class="action-icon">💳</div>
+                        <span class="action-label">Payments</span>
+                        <span class="action-desc">Record payments</span>
+                    </button>
+                </div>
+
+                <!-- Recent Deliveries -->
+                <div class="section-header">
+                    <h2>Recent Deliveries</h2>
+                    <button class="btn-text" id="btn-view-all-deliveries">View All →</button>
+                </div>
+                <div id="recent-deliveries-list" class="delivery-list">
+                    <div class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        <p>No deliveries recorded yet</p>
+                        <button class="btn-primary btn-sm" data-screen="daily-entry">Start Recording</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== DAILY ENTRY SCREEN ==================== -->
+            <section id="screen-daily-entry" class="screen">
+                <div class="date-selector">
+                    <button id="btn-prev-date" class="btn-icon-sm" aria-label="Previous day">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m15 18-6-6 6-6" />
+                        </svg>
+                    </button>
+                    <input type="date" id="entry-date" class="date-input">
+                    <button id="btn-next-date" class="btn-icon-sm" aria-label="Next day">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m9 18 6-6-6-6" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="entry-summary-bar">
+                    <span>Delivered: <strong id="entry-total-customers">0</strong> customers</span>
+                    <span>Total: <strong id="entry-total-milk">0</strong>L</span>
+                </div>
+
+                <div class="area-filter-bar" id="entry-area-filter">
+                    <!-- Area pills filled by JS -->
+                </div>
+
+                <div class="search-bar">
+                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.3-4.3" />
+                    </svg>
+                    <input type="text" id="search-customers-entry" class="search-input"
+                        placeholder="Search customers...">
+                </div>
+
+                <div id="daily-entry-list" class="customer-entry-list">
+                    <!-- Filled by JS -->
+                </div>
+
+                <button id="btn-save-entries" class="btn-primary btn-floating">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                        <polyline points="17,21 17,13 7,13 7,21" />
+                        <polyline points="7,3 7,8 15,8" />
+                    </svg>
+                    Save All
+                </button>
+            </section>
+
+            <!-- ==================== CUSTOMERS SCREEN ==================== -->
+            <section id="screen-customers" class="screen">
+                <div class="area-filter-bar" id="customers-area-filter">
+                    <!-- Area pills filled by JS -->
+                </div>
+
+                <div class="search-bar">
+                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.3-4.3" />
+                    </svg>
+                    <input type="text" id="search-customers" class="search-input" placeholder="Search customers...">
+                </div>
+
+                <div id="customers-list" class="customers-list">
+                    <!-- Filled by JS -->
+                </div>
+
+                <button id="btn-add-customer" class="btn-primary btn-floating">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 5v14" />
+                        <path d="M5 12h14" />
+                    </svg>
+                    Add Customer
+                </button>
+            </section>
+
+            <!-- ==================== BILLING SCREEN ==================== -->
+            <section id="screen-billing" class="screen">
+                <div class="billing-controls">
+                    <div class="month-selector">
+                        <button id="btn-prev-month" class="btn-icon-sm" aria-label="Previous month">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m15 18-6-6 6-6" />
+                            </svg>
+                        </button>
+                        <span id="billing-month-label" class="month-label">January 2026</span>
+                        <button id="btn-next-month" class="btn-icon-sm" aria-label="Next month">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m9 18 6-6-6-6" />
+                            </svg>
+                        </button>
+                    </div>
+                    <button id="btn-send-all-bills" class="btn-success btn-sm">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 2 11 13" />
+                            <path d="m22 2-7 20-4-9-9-4 20-7z" />
+                        </svg>
+                        Send All Bills
+                    </button>
+                </div>
+
+                <div class="area-filter-bar" id="billing-area-filter">
+                    <!-- Area pills filled by JS -->
+                </div>
+
+                <div id="billing-list" class="billing-list">
+                    <!-- Filled by JS -->
+                </div>
+            </section>
+
+            <!-- ==================== PAYMENTS SCREEN ==================== -->
+            <section id="screen-payments" class="screen">
+                <div class="payments-controls">
+                    <div class="month-selector">
+                        <button id="btn-prev-pay-month" class="btn-icon-sm" aria-label="Previous month">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m15 18-6-6 6-6" />
+                            </svg>
+                        </button>
+                        <span id="payment-month-label" class="month-label">January 2026</span>
+                        <button id="btn-next-pay-month" class="btn-icon-sm" aria-label="Next month">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m9 18 6-6-6-6" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="search-bar">
+                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.3-4.3" />
+                    </svg>
+                    <input type="text" id="search-payments" class="search-input" placeholder="Search customers...">
+                </div>
+
+                <div id="payments-list" class="payments-list">
+                    <!-- Filled by JS -->
+                </div>
+
+                <button id="btn-add-payment" class="btn-primary btn-floating">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 5v14" />
+                        <path d="M5 12h14" />
+                    </svg>
+                    Record Payment
+                </button>
+            </section>
+
+            <!-- ==================== SETTINGS SCREEN ==================== -->
+            <section id="screen-settings" class="screen">
+                <div class="settings-group">
+                    <h3 class="settings-group-title">Business Details</h3>
+                    <div class="settings-item">
+                        <label for="setting-business-name">Business Name</label>
+                        <input type="text" id="setting-business-name" class="settings-input"
+                            placeholder="e.g. Sharma Dairy">
+                    </div>
+                    <div class="settings-item">
+                        <label for="setting-default-rate">Default Milk Rate (₹/L)</label>
+                        <input type="number" id="setting-default-rate" class="settings-input" placeholder="e.g. 74"
+                            step="1">
+                    </div>
+                    <div class="settings-item">
+                        <label for="setting-owner-phone">Your Phone Number</label>
+                        <input type="tel" id="setting-owner-phone" class="settings-input" placeholder="e.g. 9876543210">
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3 class="settings-group-title">WhatsApp Message Template</h3>
+                    <div class="settings-item">
+                        <label for="setting-msg-template">Bill Message Template</label>
+                        <textarea id="setting-msg-template" class="settings-textarea" rows="6"
+                            placeholder="Use variables: {name}, {from_date}, {to_date}, {total_qty}, {rate}, {prev_balance}, {month_total}, {final_amount}">Hello {name}, your total milk quantity from {from_date} to {to_date} is {total_qty} liters and Rate is {rate}. Previous Balance was ₹{prev_balance}. {month_name} Total amount is ₹{month_total}. Final amount is ₹{final_amount}.</textarea>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3 class="settings-group-title">Data Management</h3>
+                    <div class="settings-item">
+                        <button id="btn-export-data" class="btn-outline btn-block">📤 Export Data (JSON)</button>
+                    </div>
+                    <div class="settings-item">
+                        <button id="btn-import-data" class="btn-outline btn-block">📥 Import Data (JSON)</button>
+                        <input type="file" id="file-import" accept=".json" class="hidden">
+                    </div>
+                    <div class="settings-item">
+                        <button id="btn-import-csv" class="btn-outline btn-block">📋 Import from CSV / Google
+                            Sheet</button>
+                        <input type="file" id="file-import-csv" accept=".csv" class="hidden">
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3 class="settings-group-title">About</h3>
+                    <div class="settings-item">
+                        <p class="settings-about">DairyBook v1.0 — Made for dairy business owners to manage deliveries
+                            and billing easily.</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav id="bottom-nav" class="bottom-nav">
+            <button class="nav-item active" data-screen="dashboard" id="nav-dashboard">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9,22 9,12 15,12 15,22" />
+                </svg>
+                <span>Home</span>
+            </button>
+            <button class="nav-item" data-screen="daily-entry" id="nav-daily-entry">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                <span>Entry</span>
+            </button>
+            <button class="nav-item" data-screen="customers" id="nav-customers">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                <span>Customers</span>
+            </button>
+            <button class="nav-item" data-screen="billing" id="nav-billing">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                    <line x1="1" y1="10" x2="23" y2="10" />
+                </svg>
+                <span>Billing</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- ==================== MODALS ==================== -->
+    <!-- Add/Edit Customer Modal -->
+    <div id="modal-customer" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-customer-title">Add Customer</h2>
+                <button class="btn-icon modal-close" data-modal="modal-customer" aria-label="Close">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="customer-edit-id">
+                <div class="form-group">
+                    <label for="customer-name">Customer Name *</label>
+                    <input type="text" id="customer-name" class="form-input" placeholder="e.g. Ramesh Kumar" required>
+                </div>
+                <div class="form-group">
+                    <label for="customer-phone">Mobile Number *</label>
+                    <input type="tel" id="customer-phone" class="form-input" placeholder="e.g. 9876543210" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="customer-default-qty">Default Qty (L)</label>
+                        <input type="number" id="customer-default-qty" class="form-input" placeholder="1" step="0.5"
+                            min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="customer-rate">Rate (₹/L)</label>
+                        <input type="number" id="customer-rate" class="form-input" placeholder="74" step="1" min="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="customer-area">Area / Zone *</label>
+                    <div class="area-input-wrapper">
+                        <select id="customer-area" class="form-input">
+                            <option value="">Select Area</option>
+                        </select>
+                        <button type="button" id="btn-add-new-area" class="btn-icon-sm" title="Add New Area">+</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="customer-address">Address (Optional)</label>
+                    <input type="text" id="customer-address" class="form-input"
+                        placeholder="e.g. House No. 5, Main Road">
+                </div>
+                <div class="form-group">
+                    <label for="customer-prev-balance">Opening Balance (₹)</label>
+                    <input type="number" id="customer-prev-balance" class="form-input" placeholder="0" step="1">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline" data-modal="modal-customer">Cancel</button>
+                <button id="btn-save-customer" class="btn-primary">Save Customer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Record Payment Modal -->
+    <div id="modal-payment" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Record Payment</h2>
+                <button class="btn-icon modal-close" data-modal="modal-payment" aria-label="Close">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="payment-customer">Customer *</label>
+                    <select id="payment-customer" class="form-input" required>
+                        <option value="">Select Customer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="payment-amount">Amount (₹) *</label>
+                    <input type="number" id="payment-amount" class="form-input" placeholder="e.g. 1500" required>
+                </div>
+                <div class="form-group">
+                    <label for="payment-date">Date</label>
+                    <input type="date" id="payment-date" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="payment-mode">Payment Mode</label>
+                    <select id="payment-mode" class="form-input">
+                        <option value="cash">Cash</option>
+                        <option value="upi">UPI</option>
+                        <option value="bank">Bank Transfer</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="payment-note">Note (Optional)</label>
+                    <input type="text" id="payment-note" class="form-input" placeholder="e.g. Partial payment">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline" data-modal="modal-payment">Cancel</button>
+                <button id="btn-save-payment" class="btn-primary">Save Payment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Dialog -->
+    <div id="modal-confirm" class="modal-overlay hidden">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2 id="confirm-title">Confirm</h2>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message">Are you sure?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline" id="btn-confirm-cancel">Cancel</button>
+                <button class="btn-danger" id="btn-confirm-ok">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Send Modal -->
+    <div id="modal-bulk-send" class="modal-overlay hidden">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>Send Bulk Bills</h2>
+                <button class="btn-icon modal-close" data-modal="modal-bulk-send" aria-label="Close">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="bulk-progress-container">
+                    <div class="bulk-progress-text">
+                        <span>Sending: <strong id="bulk-current-name">...</strong></span>
+                        <span id="bulk-progress-counts">0 of 0</span>
+                    </div>
+                    <div class="bulk-progress-bar">
+                        <div id="bulk-progress-fill" class="bulk-progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="bulk-bill-preview" id="bulk-bill-preview">
+                    <!-- Preview of the current bill -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline" data-modal="modal-bulk-send">Stop</button>
+                <button id="btn-bulk-send-next" class="btn-success">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 2 11 13" />
+                        <path d="m22 2-7 20-4-9-9-4 20-7z" />
+                    </svg>
+                    Send & Next
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Area Modal -->
+    <div id="modal-new-area" class="modal-overlay hidden">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>Add New Area</h2>
+                <button class="btn-icon modal-close" data-modal="modal-new-area" aria-label="Close">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new-area-name">Area / Zone Name</label>
+                    <input type="text" id="new-area-name" class="form-input"
+                        placeholder="e.g. Sitapuri, Palam, Dayal Park" autofocus>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline" data-modal="modal-new-area">Cancel</button>
+                <button id="btn-confirm-new-area" class="btn-primary">Add Area</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+        <span id="toast-message"></span>
+    </div>
+
+    <script src="db.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
