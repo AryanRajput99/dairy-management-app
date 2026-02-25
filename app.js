@@ -419,6 +419,39 @@ function updateEntrySummary() {
 
 // saveAllEntries removed — entries now auto-save on each change
 
+async function fillAllDefaults() {
+    const customers = await db.getAllCustomers();
+    const filteredCustomers = filterCustomersByArea(customers, state.entryAreaFilter);
+    let filled = 0;
+
+    for (const customer of filteredCustomers) {
+        const input = document.getElementById(`qty-${customer.id}`);
+        if (!input) continue;
+
+        const currentQty = parseFloat(input.value) || 0;
+        // Only fill if empty (don't overwrite existing entries)
+        if (currentQty === 0 && customer.defaultQty > 0) {
+            input.value = customer.defaultQty;
+            state.pendingEntries[customer.id] = customer.defaultQty;
+
+            // Auto-save to database
+            await db.setDelivery(customer.id, state.entryDate, customer.defaultQty);
+
+            // Update card styling
+            const card = input.closest('.entry-card');
+            card.classList.add('has-value');
+            filled++;
+        }
+    }
+
+    updateEntrySummary();
+    if (filled > 0) {
+        showToast(`Filled ${filled} customers with default qty`, 'success');
+    } else {
+        showToast('All customers already have entries', 'info');
+    }
+}
+
 function filterEntryList(query) {
     const q = query.toLowerCase().trim();
     document.querySelectorAll('.entry-card').forEach(card => {

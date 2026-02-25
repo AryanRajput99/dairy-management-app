@@ -1594,3 +1594,29 @@ select.form-input {
     background: rgba(148, 163, 184, 0.1);
     color: var(--text-muted);
 }
+
+/* Entry summary bar */
+.entry-summary-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.btn-fill-defaults {
+    background: var(--accent-success);
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+}
+
+.btn-fill-defaults:active {
+    opacity: 0.7;
+}
