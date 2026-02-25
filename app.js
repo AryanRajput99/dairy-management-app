@@ -167,14 +167,14 @@ async function loadDashboard() {
     // Total customers
     document.getElementById('val-customers').textContent = customers.length;
 
-    // Pending amount (simplified - just show current month's unpaid)
+    // Pending amount — actual balance due after all payments
     const now = new Date();
     let totalPending = 0;
     for (const customer of customers) {
         try {
             const bill = await db.generateBill(customer.id, now.getFullYear(), now.getMonth());
-            if (bill && bill.finalAmount > 0) {
-                totalPending += bill.finalAmount;
+            if (bill && bill.balanceDue > 0) {
+                totalPending += bill.balanceDue;
             }
         } catch (e) { /* skip */ }
     }
@@ -692,34 +692,30 @@ async function loadBilling() {
 
         const initials = getInitials(customer.name);
         const avatarClass = getAvatarClass(customer.name);
-        const balanceClass = bill.prevBalance > 0 ? 'balance-positive' :
-            bill.prevBalance < 0 ? 'balance-negative' : 'balance-zero';
-        const dueClass = bill.balanceDue > 0 ? 'balance-positive' : 'balance-zero';
-        const paidClass = bill.paidThisMonth > 0 ? 'balance-paid' : '';
+        const isPaid = bill.paidThisMonth > 0 && bill.balanceDue <= 0;
 
         html += `
-            <div class="billing-item">
+            <div class="billing-item ${isPaid ? 'billing-paid' : ''}">
                 <div class="item-avatar ${avatarClass}">${initials}</div>
                 <div class="item-info">
-                    <div class="item-name">${escapeHtml(customer.name)}</div>
-                    <div class="item-detail">${bill.deliveryDays} days · ${bill.totalQty}L · ₹${bill.rate}/L${customer.area ? ' · 📍' + escapeHtml(customer.area) : ''}</div>
+                    <div class="item-name">${escapeHtml(customer.name)}${customer.area ? ' <span style="opacity:0.5;font-size:12px">· ' + escapeHtml(customer.area) + '</span>' : ''}</div>
+                    <div class="item-detail">${bill.deliveryDays} days · ${bill.totalQty}L · ₹${bill.rate}/L</div>
                 </div>
                 <div class="item-value">
-                    <div class="item-qty ${bill.balanceDue <= 0 ? 'text-success' : ''}">₹${formatNumber(bill.balanceDue)}</div>
-                    ${bill.balanceDue <= 0 && bill.paidThisMonth > 0 ? '<div class="item-amount" style="color:var(--accent-success)">✅ Paid</div>' : '<div class="item-amount">Due</div>'}
+                    <div class="item-qty ${isPaid ? 'text-success' : ''}">${isPaid ? '✅' : '₹' + formatNumber(bill.balanceDue)}</div>
+                    <div class="item-amount">${isPaid ? 'Paid' : 'Due'}</div>
                 </div>
                 <div class="billing-details">
-                    <span>Month Total: <strong>₹${formatNumber(bill.monthTotal)}</strong></span>
-                    <span>Total Qty: <strong>${bill.totalQty}L</strong></span>
-                    <span class="${balanceClass}">Prev Balance: <strong>₹${formatNumber(bill.prevBalance)}</strong></span>
-                    <span>Total Bill: <strong>₹${formatNumber(bill.finalAmount)}</strong></span>
-                    ${bill.paidThisMonth > 0 ? `<span class="${paidClass}">Paid: <strong style="color:var(--accent-success)">₹${formatNumber(bill.paidThisMonth)}</strong></span>` : ''}
-                    ${bill.paidThisMonth > 0 ? `<span class="${dueClass}">Balance Due: <strong>₹${formatNumber(bill.balanceDue)}</strong></span>` : ''}
+                    <span>This Month: <strong>₹${formatNumber(bill.monthTotal)}</strong></span>
+                    ${bill.prevBalance > 0 ? `<span style="color:var(--accent-danger)">Prev Due: <strong>₹${formatNumber(bill.prevBalance)}</strong></span>` : ''}
+                    ${bill.prevBalance < 0 ? `<span style="color:var(--accent-success)">Credit: <strong>₹${formatNumber(Math.abs(bill.prevBalance))}</strong></span>` : ''}
+                    ${bill.paidThisMonth > 0 ? `<span style="color:var(--accent-success)">Paid: <strong>₹${formatNumber(bill.paidThisMonth)}</strong></span>` : ''}
+                    <span style="font-weight:700;${bill.balanceDue > 0 ? 'color:var(--accent-danger)' : 'color:var(--accent-success)'}">Balance: ₹${formatNumber(bill.balanceDue)}</span>
                 </div>
                 <div class="billing-actions">
                     <button class="btn-whatsapp" onclick="sendWhatsAppBill('${customer.id}', ${state.billingYear}, ${state.billingMonth})">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                        Send WhatsApp
+                        Send Bill
                     </button>
                 </div>
             </div>
@@ -754,7 +750,9 @@ async function prepareWhatsAppMessage(customerId, year, month) {
         .replace(/{prev_balance}/g, formatNumber(bill.prevBalance))
         .replace(/{month_name}/g, bill.monthName)
         .replace(/{month_total}/g, formatNumber(bill.monthTotal))
-        .replace(/{final_amount}/g, formatNumber(bill.finalAmount));
+        .replace(/{final_amount}/g, formatNumber(bill.finalAmount))
+        .replace(/{paid}/g, formatNumber(bill.paidThisMonth))
+        .replace(/{balance_due}/g, formatNumber(bill.balanceDue));
 
     let phone = bill.phone.replace(/[^0-9]/g, '');
     if (phone.length === 10) phone = '91' + phone;
@@ -910,17 +908,33 @@ async function openPaymentModal() {
     const modal = document.getElementById('modal-payment');
     const select = document.getElementById('payment-customer');
     const customers = await db.getAllCustomers();
+    const now = new Date();
 
-    // Populate customer dropdown
+    // Populate customer dropdown with due amounts
     select.innerHTML = '<option value="">Select Customer</option>';
-    customers.forEach(c => {
-        select.innerHTML += `<option value="${c.id}">${escapeHtml(c.name)}</option>`;
-    });
+    for (const c of customers) {
+        const bill = await db.generateBill(c.id, now.getFullYear(), now.getMonth());
+        const due = bill ? bill.balanceDue : 0;
+        const dueText = due > 0 ? ` (₹${formatNumber(due)} due)` : due < 0 ? ` (₹${formatNumber(Math.abs(due))} credit)` : ' (₹0 due)';
+        select.innerHTML += `<option value="${c.id}">${escapeHtml(c.name)}${dueText}</option>`;
+    }
 
     document.getElementById('payment-amount').value = '';
-    document.getElementById('payment-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('payment-date').value = now.toISOString().split('T')[0];
     document.getElementById('payment-mode').value = 'cash';
     document.getElementById('payment-note').value = '';
+
+    // Show due amount when customer is selected
+    select.onchange = async () => {
+        const selectedId = select.value;
+        if (!selectedId) return;
+        const bill = await db.generateBill(selectedId, now.getFullYear(), now.getMonth());
+        if (bill && bill.balanceDue > 0) {
+            document.getElementById('payment-amount').placeholder = `Due: ₹${formatNumber(bill.balanceDue)}`;
+        } else {
+            document.getElementById('payment-amount').placeholder = 'Amount';
+        }
+    };
 
     modal.classList.remove('hidden');
 }

@@ -1533,6 +1533,10 @@ select.form-input {
     color: var(--accent-success) !important;
 }
 
+.billing-paid {
+    opacity: 0.65;
+}
+
 /* Customer balance badges */
 .customer-balance {
     font-size: 11px;

@@ -343,7 +343,7 @@ class DairyDB {
 
     getMessageTemplate() {
         return localStorage.getItem('dairybook_msg_template') ||
-            'Hello {name}, your total milk quantity from {from_date} to {to_date} is {total_qty} liters and Rate is {rate}. Previous Balance was ₹{prev_balance}. {month_name} Total amount is ₹{month_total}. Final amount is ₹{final_amount}.';
+            'Hello {name},\n\nYour milk bill for {month_name}:\n📅 {from_date} to {to_date}\n🥛 Total Qty: {total_qty}L @ ₹{rate}/L\n💰 Month Total: ₹{month_total}\n📋 Previous Balance: ₹{prev_balance}\n📊 Total Bill: ₹{final_amount}\n✅ Paid: ₹{paid}\n\n🔴 *Balance Due: ₹{balance_due}*\n\nThank you! 🙏';
     }
 
     setMessageTemplate(template) {
