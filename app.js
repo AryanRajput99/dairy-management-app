@@ -248,8 +248,7 @@ function setupDailyEntry() {
         filterEntryList(e.target.value);
     });
 
-    // Save button
-    document.getElementById('btn-save-entries').addEventListener('click', saveAllEntries);
+    // Save button removed — entries auto-save on change
 }
 
 // Area pills helper
@@ -365,12 +364,15 @@ async function loadDailyEntry() {
     await renderAreaPills('entry-area-filter', 'entryAreaFilter', loadDailyEntry);
 }
 
-function adjustQty(customerId, delta) {
+async function adjustQty(customerId, delta) {
     const input = document.getElementById(`qty-${customerId}`);
     let current = parseFloat(input.value) || 0;
     current = Math.max(0, current + delta);
     input.value = current || '';
     state.pendingEntries[customerId] = current;
+
+    // Auto-save to database
+    await db.setDelivery(customerId, state.entryDate, current);
 
     // Update card styling
     const card = input.closest('.entry-card');
@@ -383,9 +385,12 @@ function adjustQty(customerId, delta) {
     updateEntrySummary();
 }
 
-function updateQty(customerId, value) {
+async function updateQty(customerId, value) {
     const qty = parseFloat(value) || 0;
     state.pendingEntries[customerId] = qty;
+
+    // Auto-save to database
+    await db.setDelivery(customerId, state.entryDate, qty);
 
     const card = document.querySelector(`[data-customer-id="${customerId}"]`);
     if (qty > 0) {
@@ -412,20 +417,7 @@ function updateEntrySummary() {
     document.getElementById('entry-total-milk').textContent = totalMilk;
 }
 
-async function saveAllEntries() {
-    const entries = Object.entries(state.pendingEntries);
-    let saved = 0;
-
-    for (const [customerId, qty] of entries) {
-        await db.setDelivery(customerId, state.entryDate, qty);
-        if (qty > 0) saved++;
-    }
-
-    showToast(`Saved ${saved} deliveries for ${formatDate(state.entryDate)}`, 'success');
-
-    // Refresh dashboard stats if we go back
-    loadDailyEntry();
-}
+// saveAllEntries removed — entries now auto-save on each change
 
 function filterEntryList(query) {
     const q = query.toLowerCase().trim();
