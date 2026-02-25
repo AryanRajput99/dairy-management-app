@@ -502,17 +502,16 @@ async function loadCustomers() {
 
         // Calculate outstanding balance for this customer
         const bill = await db.generateBill(customer.id, currentYear, currentMonth);
-        const balance = bill ? bill.balanceDue : 0;
+        const balance = bill ? Math.max(0, bill.balanceDue) : 0;
         const balanceDisplay = balance > 0 ? `<span class="customer-balance due">₹${formatNumber(balance)} due</span>` :
-            balance < 0 ? `<span class="customer-balance credit">₹${formatNumber(Math.abs(balance))} credit</span>` :
-                `<span class="customer-balance clear">₹0 due</span>`;
+            `<span class="customer-balance clear">Paid ✓</span>`;
 
         html += `
             <div class="customer-item" data-customer-name="${escapeHtml(customer.name.toLowerCase())}">
                 <div class="item-avatar ${avatarClass}">${initials}</div>
                 <div class="item-info">
                     <div class="item-name">${escapeHtml(customer.name)} ${balanceDisplay}</div>
-                    <div class="item-detail">${customer.phone ? '📱 ' + customer.phone : 'No phone'} · ₹${customer.rate}/L${customer.area ? ' · 📍' + escapeHtml(customer.area) : ''}</div>
+                    <div class="item-detail">${customer.phone || 'No phone'} · ₹${customer.rate}/L${customer.area ? ' · ' + escapeHtml(customer.area) : ''}</div>
                 </div>
                 <div class="item-actions">
                     <button class="btn-edit-customer" onclick="editCustomer('${customer.id}')" aria-label="Edit">
@@ -676,15 +675,24 @@ async function loadBilling() {
     }
 
     let html = '';
+    let summaryTotalBill = 0;
+    let summaryTotalPaid = 0;
+    let summaryBalanceDue = 0;
     const filteredCustomers = filterCustomersByArea(customers, state.billingAreaFilter);
 
     for (const customer of filteredCustomers) {
         const bill = await db.generateBill(customer.id, state.billingYear, state.billingMonth);
         if (!bill) continue;
 
+        // Accumulate summary totals
+        summaryTotalBill += bill.finalAmount;
+        summaryTotalPaid += bill.paidThisMonth;
+        summaryBalanceDue += bill.balanceDue;
+
         const initials = getInitials(customer.name);
         const avatarClass = getAvatarClass(customer.name);
-        const isPaid = bill.paidThisMonth > 0 && bill.balanceDue <= 0;
+        const isPaid = bill.balanceDue <= 0;
+        const displayDue = Math.max(0, bill.balanceDue);
 
         html += `
             <div class="billing-item ${isPaid ? 'billing-paid' : ''}">
@@ -694,15 +702,14 @@ async function loadBilling() {
                     <div class="item-detail">${bill.deliveryDays} days · ${bill.totalQty}L · ₹${bill.rate}/L</div>
                 </div>
                 <div class="item-value">
-                    <div class="item-qty ${isPaid ? 'text-success' : ''}">${isPaid ? '✅' : '₹' + formatNumber(bill.balanceDue)}</div>
+                    <div class="item-qty ${isPaid ? 'text-success' : ''}">${isPaid ? '✅' : '₹' + formatNumber(displayDue)}</div>
                     <div class="item-amount">${isPaid ? 'Paid' : 'Due'}</div>
                 </div>
                 <div class="billing-details">
                     <span>This Month: <strong>₹${formatNumber(bill.monthTotal)}</strong></span>
                     ${bill.prevBalance > 0 ? `<span style="color:var(--accent-danger)">Prev Due: <strong>₹${formatNumber(bill.prevBalance)}</strong></span>` : ''}
-                    ${bill.prevBalance < 0 ? `<span style="color:var(--accent-success)">Credit: <strong>₹${formatNumber(Math.abs(bill.prevBalance))}</strong></span>` : ''}
                     ${bill.paidThisMonth > 0 ? `<span style="color:var(--accent-success)">Paid: <strong>₹${formatNumber(bill.paidThisMonth)}</strong></span>` : ''}
-                    <span style="font-weight:700;${bill.balanceDue > 0 ? 'color:var(--accent-danger)' : 'color:var(--accent-success)'}">Balance: ₹${formatNumber(bill.balanceDue)}</span>
+                    <span style="font-weight:700;${isPaid ? 'color:var(--accent-success)' : 'color:var(--accent-danger)'}">${isPaid ? 'Paid ✓' : 'Balance: ₹' + formatNumber(displayDue)}</span>
                 </div>
                 <div class="billing-actions">
                     <button class="btn-whatsapp" onclick="sendWhatsAppBill('${customer.id}', ${state.billingYear}, ${state.billingMonth})">
@@ -713,7 +720,26 @@ async function loadBilling() {
             </div>
         `;
     }
-    list.innerHTML = html;
+
+    // Add summary bar at top
+    const summaryHtml = `
+        <div class="billing-summary-bar">
+            <div class="billing-summary-item">
+                <span class="billing-summary-label">Total Bill</span>
+                <span class="billing-summary-value">₹${formatNumber(summaryTotalBill)}</span>
+            </div>
+            <div class="billing-summary-item">
+                <span class="billing-summary-label">Received</span>
+                <span class="billing-summary-value" style="color:var(--accent-success)">₹${formatNumber(summaryTotalPaid)}</span>
+            </div>
+            <div class="billing-summary-item">
+                <span class="billing-summary-label">Due</span>
+                <span class="billing-summary-value" style="color:${Math.max(0, summaryBalanceDue) > 0 ? 'var(--accent-danger)' : 'var(--accent-success)'}">₹${formatNumber(Math.max(0, summaryBalanceDue))}</span>
+            </div>
+        </div>
+    `;
+
+    list.innerHTML = summaryHtml + html;
 
     // Render area pills
     await renderAreaPills('billing-area-filter', 'billingAreaFilter', loadBilling);
@@ -902,29 +928,34 @@ async function openPaymentModal() {
     const customers = await db.getAllCustomers();
     const now = new Date();
 
-    // Populate customer dropdown with due amounts
+    // Populate customer dropdown — only show customers with balance due
     select.innerHTML = '<option value="">Select Customer</option>';
     for (const c of customers) {
         const bill = await db.generateBill(c.id, now.getFullYear(), now.getMonth());
-        const due = bill ? bill.balanceDue : 0;
-        const dueText = due > 0 ? ` (₹${formatNumber(due)} due)` : due < 0 ? ` (₹${formatNumber(Math.abs(due))} credit)` : ' (₹0 due)';
-        select.innerHTML += `<option value="${c.id}">${escapeHtml(c.name)}${dueText}</option>`;
+        const due = bill ? Math.max(0, bill.balanceDue) : 0;
+        if (due > 0) {
+            select.innerHTML += `<option value="${c.id}" data-due="${due}">${escapeHtml(c.name)} (₹${formatNumber(due)} due)</option>`;
+        }
     }
 
-    document.getElementById('payment-amount').value = '';
+    const amountInput = document.getElementById('payment-amount');
+    amountInput.value = '';
+    amountInput.placeholder = 'Amount';
+    amountInput.removeAttribute('max');
     document.getElementById('payment-date').value = now.toISOString().split('T')[0];
     document.getElementById('payment-mode').value = 'cash';
     document.getElementById('payment-note').value = '';
 
-    // Show due amount when customer is selected
-    select.onchange = async () => {
-        const selectedId = select.value;
-        if (!selectedId) return;
-        const bill = await db.generateBill(selectedId, now.getFullYear(), now.getMonth());
-        if (bill && bill.balanceDue > 0) {
-            document.getElementById('payment-amount').placeholder = `Due: ₹${formatNumber(bill.balanceDue)}`;
+    // When customer is selected, set max amount and placeholder
+    select.onchange = () => {
+        const selectedOption = select.options[select.selectedIndex];
+        const due = parseFloat(selectedOption?.dataset?.due) || 0;
+        if (due > 0) {
+            amountInput.placeholder = `Max: ₹${formatNumber(due)}`;
+            amountInput.max = due;
         } else {
-            document.getElementById('payment-amount').placeholder = 'Amount';
+            amountInput.placeholder = 'Amount';
+            amountInput.removeAttribute('max');
         }
     };
 
@@ -940,6 +971,15 @@ async function savePayment() {
 
     if (!customerId) { showToast('Please select a customer', 'error'); return; }
     if (!amount || parseFloat(amount) <= 0) { showToast('Please enter a valid amount', 'error'); return; }
+
+    // Validate payment does not exceed balance due
+    const now = new Date();
+    const bill = await db.generateBill(customerId, now.getFullYear(), now.getMonth());
+    const maxDue = bill ? Math.max(0, bill.balanceDue) : 0;
+    if (parseFloat(amount) > maxDue) {
+        showToast(`Amount exceeds balance due (₹${formatNumber(maxDue)})`, 'error');
+        return;
+    }
 
     try {
         await db.addPayment({ customerId, amount: parseFloat(amount), date, mode, note });

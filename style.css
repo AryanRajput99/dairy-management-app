@@ -1537,6 +1537,39 @@ select.form-input {
     opacity: 0.65;
 }
 
+/* Billing summary bar */
+.billing-summary-bar {
+    display: flex;
+    justify-content: space-between;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    gap: 8px;
+}
+
+.billing-summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.billing-summary-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.billing-summary-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
 /* Customer balance badges */
 .customer-balance {
     font-size: 11px;
